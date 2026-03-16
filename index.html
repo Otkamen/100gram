@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>100gram</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <div class="app" id="app">
+    <aside class="sidebar">
+      <header class="sidebar-header">
+        <div class="brand">
+          <span class="brand-dot"></span>
+          <span class="brand-name">100gram</span>
+        </div>
+
+        <div class="header-actions">
+          <button id="createChatButton" class="icon-button" title="New chat">+</button>
+          <div class="user-block">
+            <span id="userInfo" class="user-info">Not signed in</span>
+            <button id="authButton" class="auth-button">Sign in</button>
+          </div>
+        </div>
+      </header>
+
+      <div class="sidebar-search">
+        <input id="chatSearch" type="text" placeholder="Search chats" autocomplete="off" />
+      </div>
+
+      <div class="chat-list" id="chatList">
+        <!-- Chat items render here -->
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="main-header">
+        <div class="chat-info">
+          <div class="avatar"></div>
+          <div class="chat-title">
+            <div class="chat-name">Select a chat</div>
+            <div class="chat-status">Start a conversation</div>
+          </div>
+        </div>
+      </header>
+
+      <section class="messages" id="messages">
+        <!-- Messages appear here -->
+      </section>
+
+      <section class="message-input" id="messageInputContainer" style="display: none;">
+        <input id="messageInput" type="text" placeholder="Message" autocomplete="off" />
+        <button id="sendButton" class="send-button" title="Send">➤</button>
+      </section>
+    </main>
+  </div>
+
+  <div id="newChatModal" class="modal hidden">
+    <div class="modal-content">
+      <h3>Create new chat</h3>
+      <input id="newChatName" type="text" placeholder="Chat name" autocomplete="off" />
+      <div class="modal-actions">
+        <button id="createChatConfirm">Create</button>
+        <button id="createChatCancel">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="authOverlay" class="auth-overlay hidden">
+    <div class="auth-card">
+      <h2>Sign in with Google</h2>
+      <p class="auth-message">Signing in allows your chat data to be stored per account.</p>
+      <div id="googleSignInButton" class="google-signin"></div>
+      <div class="auth-note">Use the same Google account on each device to keep your chats.</div>
+    </div>
+  </div>
+
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="js/script.js" defer></script>
+</body>
+</html>
