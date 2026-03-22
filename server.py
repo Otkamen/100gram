@@ -243,8 +243,10 @@ app = FastAPI(title="100gram API")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "https://otkamen.github.io",   # ← ваш GitHub Pages домен
-        "http://localhost:8080",        # для локальной разработки
+        "https://otkamen.github.io",
+        "https://otkamen.github.io/100gram",
+        "https://otkamen.github.io/100gram/",
+        "http://localhost:8080",
         "http://localhost:5500",
     ],
     allow_credentials=True,
