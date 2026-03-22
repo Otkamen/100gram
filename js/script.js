@@ -2,7 +2,7 @@
 // Chats and messages are stored on the server, not in localStorage.
 
 const GOOGLE_CLIENT_ID = '637219421031-95g7dthgs5n6jfecqqgrmtccbu0l6rtv.apps.googleusercontent.com';
-const API = 'http://localhost:8000';  // ← замените на адрес вашего сервера в продакшне
+const API = 'https://one00gram.onrender.com';  // ← замените на адрес вашего сервера в продакшне
 
 let currentUser    = null;   // { id, username, display_name, has_username }
 let apiToken       = null;   // JWT from our backend
