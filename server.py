@@ -359,7 +359,7 @@ async def google_auth(data: GoogleAuthIn, db: Session = Depends(get_db)):
         user = User(
             username     = temp_username,
             display_name = google_name,
-            hashed_pw    = hash_password(uuid.uuid4().hex),  # random, never used
+            hashed_pw    = hash_password(uuid.uuid4().hex[:32]),  # random, never used
             google_id    = google_id,
         )
         db.add(user)
