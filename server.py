@@ -33,7 +33,7 @@ from fastapi import (
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError, jwt
-from passlib.context import CryptContext
+import bcrypt
 from pydantic import BaseModel
 from sqlalchemy import (
     Boolean, Column, DateTime, ForeignKey,
@@ -124,16 +124,15 @@ def get_db():
 
 
 # ── Auth helpers ──────────────────────────────────────────────────────────────
-pwd_ctx   = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2    = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 
 def hash_password(pw: str) -> str:
-    return pwd_ctx.hash(pw)
+    return bcrypt.hashpw(pw.encode(), bcrypt.gensalt()).decode()
 
 
 def verify_password(plain: str, hashed: str) -> bool:
-    return pwd_ctx.verify(plain, hashed)
+    return bcrypt.checkpw(plain.encode(), hashed.encode())
 
 
 def create_token(user_id: str) -> str:
