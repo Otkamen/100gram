@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import json
 import uuid
+import httpx
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
@@ -44,6 +45,10 @@ from sqlalchemy.orm import DeclarativeBase, Session, relationship, sessionmaker
 SECRET_KEY  = "CHANGE_THIS_TO_A_LONG_RANDOM_STRING_IN_PRODUCTION"
 ALGORITHM   = "HS256"
 TOKEN_EXPIRE_DAYS = 30
+
+# Тот же Client ID что в script.js
+GOOGLE_CLIENT_ID  = "637219421031-95g7dthgs5n6jfecqqgrmtccbu0l6rtv.apps.googleusercontent.com"
+GOOGLE_TOKEN_INFO = "https://oauth2.googleapis.com/tokeninfo"
 
 DATABASE_URL = "sqlite:///./100gram.db"
 
@@ -70,6 +75,7 @@ class User(Base):
     username      = Column(String, unique=True, nullable=False, index=True)
     display_name  = Column(String, nullable=True)
     hashed_pw     = Column(String, nullable=False)
+    google_id     = Column(String, unique=True, nullable=True, index=True)  # Google sub
     # Client's public key for E2E (X25519, base64)
     public_key    = Column(Text, nullable=True)
     created_at    = Column(DateTime, default=lambda: datetime.now(timezone.utc))
@@ -163,6 +169,8 @@ class UserOut(BaseModel):
     username:     str
     display_name: Optional[str]
     public_key:   Optional[str]
+    google_id:    Optional[str] = None
+    has_username: bool = False   # True if user has set a real username (not temp)
 
     class Config:
         from_attributes = True
@@ -292,6 +300,53 @@ def login(form: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get
 @app.get("/auth/me", response_model=UserOut)
 def me(current: User = Depends(get_current_user)):
     return current
+
+
+# ── Google Sign-In ────────────────────────────────────────────────────────────
+class GoogleAuthIn(BaseModel):
+    credential: str   # Google ID token (JWT from GSI)
+
+
+@app.post("/auth/google", response_model=TokenOut)
+async def google_auth(data: GoogleAuthIn, db: Session = Depends(get_db)):
+    # Verify token with Google
+    async with httpx.AsyncClient() as client:
+        resp = await client.get(GOOGLE_TOKEN_INFO, params={"id_token": data.credential})
+
+    if resp.status_code != 200:
+        raise HTTPException(401, "Invalid Google token")
+
+    info = resp.json()
+
+    # Check audience matches our client ID
+    if info.get("aud") != GOOGLE_CLIENT_ID:
+        raise HTTPException(401, "Token audience mismatch")
+
+    google_id    = info["sub"]
+    google_name  = info.get("name") or info.get("email", "User")
+
+    # Find existing user by google_id, or create new one
+    user = db.query(User).filter(User.google_id == google_id).first()
+
+    if not user:
+        # New user — create with placeholder username, will be set via /auth/me PATCH
+        # Generate temp unique username from google_id
+        temp_username = "user_" + google_id[-8:]
+        # Make sure it's unique
+        while db.query(User).filter(User.username == temp_username).first():
+            temp_username += "_"
+
+        user = User(
+            username     = temp_username,
+            display_name = google_name,
+            hashed_pw    = hash_password(uuid.uuid4().hex),  # random, never used
+            google_id    = google_id,
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+
+    return TokenOut(access_token=create_token(user.id), user=UserOut.model_validate(user))
 
 
 @app.patch("/auth/me", response_model=UserOut)
