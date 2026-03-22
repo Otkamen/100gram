@@ -25,8 +25,11 @@
       </header>
 
       <div class="sidebar-search">
-        <input id="chatSearch" type="text" placeholder="Search chats" autocomplete="off" />
+        <input id="chatSearch" type="text" placeholder="Search chats and messages..." autocomplete="off" />
       </div>
+
+      <!-- Search results panel (hidden by default) -->
+      <div id="searchResults" class="search-results hidden"></div>
 
       <div class="chat-list" id="chatList">
         <!-- Chat items render here -->
@@ -55,13 +58,71 @@
     </main>
   </div>
 
+  <!-- New chat modal (личный или групповой) -->
   <div id="newChatModal" class="modal hidden">
     <div class="modal-content">
-      <h3>Create new chat</h3>
-      <input id="newChatName" type="text" placeholder="Chat name" autocomplete="off" />
+      <h3>New chat</h3>
+      <div class="chat-type-tabs">
+        <button class="tab-btn active" id="tabDM" onclick="switchTab('dm')">Direct</button>
+        <button class="tab-btn" id="tabGroup" onclick="switchTab('group')">Group</button>
+      </div>
+      <!-- DM tab -->
+      <div id="dmTab">
+        <p class="modal-hint">Find user by @username</p>
+        <input id="dmUsernameInput" type="text" placeholder="@username" autocomplete="off" />
+        <div id="dmSearchResult" class="dm-search-result"></div>
+      </div>
+      <!-- Group tab -->
+      <div id="groupTab" class="hidden">
+        <input id="groupNameInput" type="text" placeholder="Group name" autocomplete="off" />
+      </div>
       <div class="modal-actions">
         <button id="createChatConfirm">Create</button>
         <button id="createChatCancel">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete chat confirmation -->
+  <div id="deleteChatModal" class="modal hidden">
+    <div class="modal-content">
+      <h3>Delete chat?</h3>
+      <p class="modal-hint" id="deleteChatName" style="margin-bottom:16px;color:rgba(255,255,255,0.7)"></p>
+      <div class="modal-actions">
+        <button id="deleteChatConfirm" style="background:#e74c3c;color:#fff;">Delete</button>
+        <button id="deleteChatCancel">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Nickname setup modal (shown after first login) -->
+  <div id="nicknameModal" class="modal hidden">
+    <div class="modal-content">
+      <h3>Choose your @username</h3>
+      <p class="modal-hint">This will be your unique handle. You can change it later.</p>
+      <div class="username-input-wrap">
+        <span class="at-prefix">@</span>
+        <input id="nicknameInput" type="text" placeholder="username" autocomplete="off" maxlength="20" />
+      </div>
+      <div id="nicknameStatus" class="nickname-status"></div>
+      <div class="modal-actions">
+        <button id="nicknameConfirm" disabled>Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit nickname modal -->
+  <div id="editNicknameModal" class="modal hidden">
+    <div class="modal-content">
+      <h3>Change @username</h3>
+      <div class="username-input-wrap">
+        <span class="at-prefix">@</span>
+        <input id="editNicknameInput" type="text" placeholder="new_username" autocomplete="off" maxlength="20" />
+      </div>
+      <div id="editNicknameStatus" class="nickname-status"></div>
+      <div class="modal-actions">
+        <button id="editNicknameConfirm" disabled>Save</button>
+        <button id="editNicknameCancel">Cancel</button>
       </div>
     </div>
   </div>
