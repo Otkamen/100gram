@@ -42,7 +42,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import DeclarativeBase, Session, relationship, sessionmaker
 
 # ── Config ────────────────────────────────────────────────────────────────────
-SECRET_KEY  = "applebookicemikegambling"
+SECRET_KEY  = "CHANGE_THIS_TO_A_LONG_RANDOM_STRING_IN_PRODUCTION"
 ALGORITHM   = "HS256"
 TOKEN_EXPIRE_DAYS = 30
 
@@ -153,7 +153,7 @@ def get_current_user(token: str = Depends(oauth2), db: Session = Depends(get_db)
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise exc
-    return user
+    return UserOut.from_user(user)
 
 
 # ── Pydantic schemas ──────────────────────────────────────────────────────────
@@ -170,10 +170,24 @@ class UserOut(BaseModel):
     display_name: Optional[str]
     public_key:   Optional[str]
     google_id:    Optional[str] = None
-    has_username: bool = False   # True if user has set a real username (not temp)
+    has_username: bool = False   # True if username was manually set (not auto-generated)
 
     class Config:
         from_attributes = True
+
+    @classmethod
+    def from_user(cls, user: "User") -> "UserOut":
+        # has_username = True if username doesn't look like auto-generated "user_XXXXXXXX"
+        import re
+        auto = bool(re.match(r'^user_[a-z0-9]{8}_*$', user.username or ''))
+        return cls(
+            id           = user.id,
+            username     = user.username,
+            display_name = user.display_name,
+            public_key   = user.public_key,
+            google_id    = user.google_id,
+            has_username = not auto,
+        )
 
 
 class TokenOut(BaseModel):
@@ -228,7 +242,11 @@ app = FastAPI(title="100gram API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],     # restrict in production
+    allow_origins=[
+        "https://otkamen.github.io",   # ← ваш GitHub Pages домен
+        "http://localhost:8080",        # для локальной разработки
+        "http://localhost:5500",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -286,7 +304,7 @@ def register(data: RegisterIn, db: Session = Depends(get_db)):
     db.add(user)
     db.commit()
     db.refresh(user)
-    return TokenOut(access_token=create_token(user.id), user=UserOut.model_validate(user))
+    return TokenOut(access_token=create_token(user.id), user=UserOut.from_user(user))
 
 
 @app.post("/auth/login", response_model=TokenOut)
@@ -294,12 +312,12 @@ def login(form: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get
     user = db.query(User).filter(User.username == form.username.lower()).first()
     if not user or not verify_password(form.password, user.hashed_pw):
         raise HTTPException(401, "Invalid username or password")
-    return TokenOut(access_token=create_token(user.id), user=UserOut.model_validate(user))
+    return TokenOut(access_token=create_token(user.id), user=UserOut.from_user(user))
 
 
 @app.get("/auth/me", response_model=UserOut)
 def me(current: User = Depends(get_current_user)):
-    return current
+    return UserOut.from_user(current)
 
 
 # ── Google Sign-In ────────────────────────────────────────────────────────────
@@ -346,7 +364,7 @@ async def google_auth(data: GoogleAuthIn, db: Session = Depends(get_db)):
         db.commit()
         db.refresh(user)
 
-    return TokenOut(access_token=create_token(user.id), user=UserOut.model_validate(user))
+    return TokenOut(access_token=create_token(user.id), user=UserOut.from_user(user))
 
 
 @app.patch("/auth/me", response_model=UserOut)
@@ -367,7 +385,7 @@ def update_profile(
         current.public_key = data.public_key
     db.commit()
     db.refresh(current)
-    return current
+    return UserOut.from_user(current)
 
 
 # ── User lookup ───────────────────────────────────────────────────────────────
@@ -377,7 +395,7 @@ def get_user_by_username(username: str, db: Session = Depends(get_db),
     user = db.query(User).filter(User.username == username.lower()).first()
     if not user:
         raise HTTPException(404, "User not found")
-    return user
+    return UserOut.from_user(user)
 
 
 # ── Chat routes ───────────────────────────────────────────────────────────────
