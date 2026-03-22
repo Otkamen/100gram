@@ -42,7 +42,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import DeclarativeBase, Session, relationship, sessionmaker
 
 # ── Config ────────────────────────────────────────────────────────────────────
-SECRET_KEY  = "CHANGE_THIS_TO_A_LONG_RANDOM_STRING_IN_PRODUCTION"
+SECRET_KEY  = "applebookicemikegambling"
 ALGORITHM   = "HS256"
 TOKEN_EXPIRE_DAYS = 30
 
